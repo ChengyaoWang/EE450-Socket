@@ -19,5 +19,5 @@ This is the implementation for EE450's Project @ USC
   - ***Malformed Commands are not tested ! Please only input supported commands***.
   - ***All Variables are in INT32 format, except \<LENGTH> in DOUBLE***.
 - Supported Commands (***Makefile***):
-  - "make". Compute & Link all Source Files
-  - "make clean". Clean all executable & *.o files
+  - ***"make"***. Compute & Link all Source Files
+  - ***"make clean"***. Clean all executable & *.o files
