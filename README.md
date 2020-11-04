@@ -14,8 +14,8 @@ This is the implementation for EE450's Project @ USC
 - Supported Commands (***Client***):
   - "test". Starting from client, ping all components of the network
   - "exit". Starting from client, require all components of the network to terminate.
-  - "write <BW> <LENGTH> <VELOCITY> <NOISEPOWER>". Append 1 record to the database
-  - "compute <LINK_ID> <SIZE> <SIGNALPOWER>". Compute & Printout the results as required.
+  - "write \<BW> \<LENGTH> \<VELOCITY> \<NOISEPOWER>". Append 1 record to the database
+  - "compute \<LINK_ID> \<SIZE> \<SIGNALPOWER>". Compute & Printout the results as required.
   - ***Malformed Commands are not tested ! Please only input supported commands***.
 - Supported Commands (***Makefile***):
   - "make". Compute & Link all Source Files
