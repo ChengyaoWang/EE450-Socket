@@ -11,8 +11,11 @@ This is the implementation for EE450's Project @ USC
   - Server A & B -> AWS -> Moniter -> Client
   - One-click-for-all may be implemented later using *fork()*
 - Unlike Project's original requirements, "client" here accepts continous commandline input
-- Supported Commands:
+- Supported Commands (***Client***):
   - "test". Starting from client, ping all components of the network
   - "exit". Starting from client, require all components of the network to terminate.
   - "write <BW> <LENGTH> <VELOCITY> <NOISEPOWER>". Append 1 record to the database
   - "compute <LINK_ID> <SIZE> <SIGNALPOWER>". Compute & Printout the results as required.
+- Supported Commands (***Makefile***):
+  - "make". Compute & Link all Source Files
+  - "make clean". Clean all executable & *.o files
