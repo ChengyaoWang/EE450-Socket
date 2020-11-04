@@ -12,7 +12,7 @@ This is the implementation for EE450's Project @ USC
   - One-click-for-all may be implemented later using *fork()*
 - Unlike Project's original requirements, "client" here accepts continous commandline input
 - Supported Commands:
-  - <b>test</b>. Starting from client, ping all components of the network
-  - <b>exit</b> Starting from client, require all components of the network to terminate.
-  - <b>write <BW> <LENGTH> <VELOCITY> <NOISEPOWER> </b> Append 1 record to the database
-  - <b>compute <LINK_ID> <SIZE> <SIGNALPOWER> </b> Compute & Printout the results as required.
+  - "test". Starting from client, ping all components of the network
+  - "exit". Starting from client, require all components of the network to terminate.
+  - "write <BW> <LENGTH> <VELOCITY> <NOISEPOWER>". Append 1 record to the database
+  - "compute <LINK_ID> <SIZE> <SIGNALPOWER>". Compute & Printout the results as required.
