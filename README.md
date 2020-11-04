@@ -17,6 +17,7 @@ This is the implementation for EE450's Project @ USC
   - ***"write \<BW> \<LENGTH> \<VELOCITY> \<NOISEPOWER>"***. Append 1 record to the database
   - ***"compute \<LINK_ID> \<SIZE> \<SIGNALPOWER>"***. Compute & Printout the results as required.
   - ***Malformed Commands are not tested ! Please only input supported commands***.
+  - ***All Variables are in INT32 format, except \<LENGTH> in DOUBLE***.
 - Supported Commands (***Makefile***):
   - "make". Compute & Link all Source Files
   - "make clean". Clean all executable & *.o files
