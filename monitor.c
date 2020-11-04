@@ -37,14 +37,12 @@ int main(int argc, char *argv[]){
 
     // Establish TCP Connection
     socklen_t sin_size = sizeof(struct sockaddr_in);
-    assert(connect(monitor2aws_fd, (struct sockaddr *)&aws_addr, sizeof(struct sockaddr)) >= 0);
-    
+    connect(monitor2aws_fd, (struct sockaddr *)&aws_addr, sizeof(struct sockaddr));
     
     // Prepare itself
     int len;
     char buf[BUFSIZ];
     fprintf(stdout, "Monitor is up and running\n");
-    
     
     while(1){
         assert((len = recv(monitor2aws_fd, buf, BUFSIZ, 0)) > 0);

@@ -11,6 +11,7 @@
 #include <sys/wait.h>
 
 #include <assert.h>
+#define sockaddr_s sizeof(struct sockaddr)
 
 double tp, tt, tall;
 double link_length = 0.;
@@ -70,7 +71,6 @@ int socket_init(void){
     aws2udp_fd = socket(PF_INET, SOCK_DGRAM, 0);
 
     assert(aws2client_fd >= 0 || aws2moniter_fd >= 0 || aws2udp_fd >= 0);
-
     return 0;
 }
 
@@ -83,9 +83,9 @@ int main(int argc, char *argv[]){
     assert(socket_init() == 0);
 
     // Bind All Port
-    assert(bind(aws2client_fd, (struct sockaddr *)&my_addr_client, sizeof(struct sockaddr)) >= 0);
-    assert(bind(aws2moniter_fd, (struct sockaddr *)&my_addr_moniter, sizeof(struct sockaddr)) >= 0);
-    assert(bind(aws2udp_fd, (struct sockaddr *)&my_addr_udp, sizeof(struct sockaddr)) >= 0);
+    assert(bind(aws2client_fd, (struct sockaddr *)&my_addr_client, sockaddr_s) >= 0);
+    assert(bind(aws2moniter_fd, (struct sockaddr *)&my_addr_moniter, sockaddr_s) >= 0);
+    assert(bind(aws2udp_fd, (struct sockaddr *)&my_addr_udp, sockaddr_s) >= 0);
 
     // Establish 2 TCP Connections
     socklen_t sin_size = sizeof(struct sockaddr_in);
@@ -103,17 +103,17 @@ int main(int argc, char *argv[]){
 
     while(1){
         // Receive TCP Socket From client
-        assert((len = recv(client_fd, buf, BUFSIZ, 0)) > 0);
+        len = recv(client_fd, buf, BUFSIZ, 0);
         buf[len] = '\0';
         
         // Start Processing
         if(startsWith("write", buf)){
             // Parse the Data
-            assert(sscanf(buf, "%s %d %lf %d %d", replyMessage, &band_width, &link_length, &velocity, &noise_power) == 5);
+            sscanf(buf, "%s %d %lf %d %d", replyMessage, &band_width, &link_length, &velocity, &noise_power);
             // Send to Server A
-            assert(sendto(aws2udp_fd, buf, strlen(buf), 0, (struct sockaddr *)&serverA_addr, sizeof(struct sockaddr)) >= 0);
+            sendto(aws2udp_fd, buf, strlen(buf), 0, (struct sockaddr *)&serverA_addr, sockaddr_s);
             // Waiting for Server A's ACK
-            assert((len = recvfrom(aws2udp_fd, buf, BUFSIZ, 0, (struct sockaddr *)&serverA_addr, &sin_size)) >= 0);
+            len = recvfrom(aws2udp_fd, buf, BUFSIZ, 0, (struct sockaddr *)&serverA_addr, &sin_size);
             buf[len] = '\0';
             
             send(client_fd, buf, strlen(buf), 0);
@@ -121,26 +121,26 @@ int main(int argc, char *argv[]){
         }
         else if(startsWith("compute", buf)){
             // Parse the Data
-            assert(sscanf(buf, "%s %d %d %d", replyMessage, &queryIdx, &file_size, &signal_power) == 4);
+            sscanf(buf, "%s %d %d %d", replyMessage, &queryIdx, &file_size, &signal_power);
             // Send to Server A
             sprintf(buf, "%s %d", replyMessage, queryIdx);
-            assert(sendto(aws2udp_fd, buf, strlen(buf), 0, (struct sockaddr *)&serverA_addr, sizeof(struct sockaddr)) >= 0);
+            sendto(aws2udp_fd, buf, strlen(buf), 0, (struct sockaddr *)&serverA_addr, sockaddr_s);
             // Waiting for Server A's ACK
-            assert((len = recvfrom(aws2udp_fd, buf, BUFSIZ, 0, (struct sockaddr *)&serverA_addr, &sin_size)) >= 0);
+            len = recvfrom(aws2udp_fd, buf, BUFSIZ, 0, (struct sockaddr *)&serverA_addr, &sin_size);
             buf[len] = '\0';
             // Parse the Data
             if(startsWith("1", buf)){
-                assert(sscanf(  buf, "%d %d %d %lf %d %d",
-                                &computeResult, &queryIdx, &band_width, &link_length, &velocity, &noise_power) == 6);
+                sscanf( buf, "%d %d %d %lf %d %d",
+                        &computeResult, &queryIdx, &band_width, &link_length, &velocity, &noise_power);
                 // Compose Data & Contact Server B
                 sprintf(buf, "%d %d %lf %d %d %d %d",
                         queryIdx, band_width, link_length, velocity, noise_power, file_size, signal_power);
                 // Send to Server B
-                assert(sendto(aws2udp_fd, buf, strlen(buf), 0, (struct sockaddr *)&serverB_addr, sizeof(struct sockaddr)) >= 0);
+                sendto(aws2udp_fd, buf, strlen(buf), 0, (struct sockaddr *)&serverB_addr, sockaddr_s);
                 // Waiting Server B's ACK & Parse Data
-                assert((len = recvfrom(aws2udp_fd, buf, BUFSIZ, 0, (struct sockaddr *)&serverB_addr, &sin_size)) >= 0);
+                len = recvfrom(aws2udp_fd, buf, BUFSIZ, 0, (struct sockaddr *)&serverB_addr, &sin_size);
                 buf[len] = '\0';
-                assert(sscanf(buf, "%lf %lf %lf", &tp, &tt, &tall) == 3);
+                sscanf(buf, "%lf %lf %lf", &tp, &tt, &tall);
 
                 // Forward End-to-End Delay
                 sprintf(replyMessage, "%d %lf", 0, tall);
@@ -149,25 +149,23 @@ int main(int argc, char *argv[]){
                 // Forward All Delay Delay
                 sprintf(replyMessage, "%d %s", 0, buf);
                 send(moniter_fd, replyMessage, strlen(replyMessage), 0);
-                
             }
             else{
                 sscanf(buf, "%d %d", &computeResult, &queryIdx);
-                sprintf(replyMessage, "Compute Failed, Link %d not found\n", queryIdx);
+                sprintf(replyMessage, "Compute Failed, Link %d not found", queryIdx);
                 send(client_fd, replyMessage, strlen(replyMessage), 0);
 
                 // Forward End-to-End Delay
                 send(moniter_fd, replyMessage, strlen(replyMessage), 0);
             }
-
         }
         else if(startsWith("exit", buf)){
             strcpy(buf, "exit");
             fprintf(stdout, "Stopping Signal Received, terminating server A......\n");
-            assert(sendto(aws2udp_fd, buf, strlen(buf), 0, (struct sockaddr *)&serverA_addr, sizeof(struct sockaddr)) >= 0);
+            sendto(aws2udp_fd, buf, strlen(buf), 0, (struct sockaddr *)&serverA_addr, sockaddr_s);
             
             fprintf(stdout, "Stopping Signal Received, terminating server B......\n");
-            assert(sendto(aws2udp_fd, buf, strlen(buf), 0, (struct sockaddr *)&serverB_addr, sizeof(struct sockaddr)) >= 0);
+            sendto(aws2udp_fd, buf, strlen(buf), 0, (struct sockaddr *)&serverB_addr, sockaddr_s);
             
             fprintf(stdout, "Stopping Signal Received, terminating monitor......\n");
             send(moniter_fd, buf, strlen(buf), 0);
@@ -186,20 +184,19 @@ int main(int argc, char *argv[]){
             
             // Server A
             fprintf(stdout, "Pinged Server A ......");
-            assert(sendto(aws2udp_fd, "test", 5, 0, (struct sockaddr *)&serverA_addr, sizeof(struct sockaddr)) >= 0);
-            assert((len = recvfrom(aws2udp_fd, buf, BUFSIZ, 0, (struct sockaddr *)&serverA_addr, &sin_size)) >= 0);
+            sendto(aws2udp_fd, "test", 5, 0, (struct sockaddr *)&serverA_addr, sizeof(struct sockaddr));
+            len = recvfrom(aws2udp_fd, buf, BUFSIZ, 0, (struct sockaddr *)&serverA_addr, &sin_size);
             buf[len] = '\0';
             fprintf(stdout, "ACK from Server A Received\n");
 
             // Server B
             fprintf(stdout, "Pinged Server B ......");
-            assert(sendto(aws2udp_fd, "test", 5, 0, (struct sockaddr *)&serverB_addr, sizeof(struct sockaddr)) >= 0);
-            assert((len = recvfrom(aws2udp_fd, buf, BUFSIZ, 0, (struct sockaddr *)&serverB_addr, &sin_size)) >= 0);
+            sendto(aws2udp_fd, "test", 5, 0, (struct sockaddr *)&serverB_addr, sizeof(struct sockaddr));
+            len = recvfrom(aws2udp_fd, buf, BUFSIZ, 0, (struct sockaddr *)&serverB_addr, &sin_size);
             buf[len] = '\0';
             fprintf(stdout, "ACK from Server B Received\n");
 
             send(client_fd, "Test Complete, ACKing Back to Client\n", 38, 0);
-
         }
         else{
             fprintf(stdout, "Data Received not recognized, skipping\n");

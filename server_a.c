@@ -11,6 +11,8 @@
 #include <sys/wait.h>
 #include <assert.h>
 
+# define sockaddr_s sizeof(struct sockaddr)
+
 int data_in_record = 0;
 double link_length = 0.;
 int velocity = INT32_MAX;
@@ -81,33 +83,23 @@ int main(int argc, char *argv[]){
 
     while(1){
         // Receive UDP Socket
-        assert((len = recvfrom(serverA_fd, buf, BUFSIZ, 0, (struct sockaddr *)&aws_addr, &sin_size)) >= 0);
+        len = recvfrom(serverA_fd, buf, BUFSIZ, 0, (struct sockaddr *)&aws_addr, &sin_size);
         buf[len] = '\0';
         
         // Start Processing
         if(startsWith("write", buf)){
             fprintf(stdout, "The Server A received input for writing\n");
-            if(sscanf(  buf, "%s %d %lf %d %d",
-                        replyMessage, &band_width, &link_length, &velocity, &noise_power) < 5){
-                perror("Data Parsing Failure in Server A\n");
-                return 1;
-            }
+            sscanf(buf, "%s %d %lf %d %d", replyMessage, &band_width, &link_length, &velocity, &noise_power);
+
             // Add to Record
             data_in_record++;
-            if(sprintf( buf, "%d %d %f %d %d",
-                        data_in_record, band_width, link_length, velocity, noise_power) < 0){
-                perror("Data Assembling Failure in Server A\n");
-                return 1;
-            }
+            sprintf(buf, "%d %d %f %d %d", data_in_record, band_width, link_length, velocity, noise_power);
             addRecord(buf);
             fprintf(stdout, "The Server A wrote link %d to database\n", data_in_record);
 
             // Reply yo AWS
             sprintf(replyMessage, "%d", data_in_record); 
-            len = sendto(
-                serverA_fd, replyMessage, strlen(replyMessage), 0, (struct sockaddr *)&aws_addr, sizeof(struct sockaddr)
-            );
-            if(len < 0)     perror("Error Sending Insertion ACK to AWS, skipping\n");
+            len = sendto(serverA_fd, replyMessage, strlen(replyMessage), 0, (struct sockaddr *)&aws_addr, sockaddr_s);
         }
         else if(startsWith("compute", buf)){
             sscanf(buf, "%s %d", replyMessage, &queryIdx);
@@ -125,10 +117,7 @@ int main(int argc, char *argv[]){
             }
             
             // Send Back to AWS
-            len = sendto(
-                serverA_fd, replyMessage, strlen(replyMessage), 0, (struct sockaddr *)&aws_addr, sizeof(struct sockaddr)
-            );
-            if(len < 0)     perror("Error Sending Compute Success to AWS, skipping\n");
+            len = sendto(serverA_fd, replyMessage, strlen(replyMessage), 0, (struct sockaddr *)&aws_addr, sockaddr_s);
         }
         else if(startsWith("exit", buf)){
             fprintf(stdout, "Stopping Signal Received, terminating server A......\n");

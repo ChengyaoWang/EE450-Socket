@@ -59,9 +59,7 @@ int main(int argc, char *argv[]){
 
     while(1){
 
-        if((len = recvfrom(serverB_fd, buf, BUFSIZ, 0, (struct sockaddr *)&aws_addr, &sin_size)) < 0){
-            perror("Received Failure From AWS\n");     return 1;
-        }
+        len = recvfrom(serverB_fd, buf, BUFSIZ, 0, (struct sockaddr *)&aws_addr, &sin_size);
 
         // Now Everything in buf & aws_addr
         buf[len] = '\0';
@@ -77,11 +75,8 @@ int main(int argc, char *argv[]){
         }
 
         // Parse the Data
-        if(sscanf(  buf, "%d %d %lf %d %d %d %d",
-                    &queryIdx, &band_width, &link_length, &velocity, &noise_power, &file_size, &signal_power) < 7){
-            perror("Data Parsing Failure in Server B\n");
-            return 1;
-        }
+        sscanf( buf, "%d %d %lf %d %d %d %d",
+                &queryIdx, &band_width, &link_length, &velocity, &noise_power, &file_size, &signal_power);
 
         fprintf(
             stdout, "The Server B received link information: link %d, file size %d, and signal power %d\n",
@@ -99,7 +94,6 @@ int main(int argc, char *argv[]){
         len = sendto(
             serverB_fd, replyMessage, strlen(replyMessage), 0, (struct sockaddr *)&aws_addr, sizeof(struct sockaddr)
         );
-        if(len < 0)     perror("Error Sending Compute Success to AWS, skipping\n");
     }
 
     close(serverB_fd);

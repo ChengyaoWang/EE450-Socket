@@ -13,7 +13,7 @@ sample:
 	gcc ./sample/sample_udp_server.c -o ./sample/sample_udp_server
 
 clean:
-	rm -rf *.o server_a server_b aws
+	rm -rf *.o server_a server_b aws client monitor
 	rm -rf ./sample/*.o 
 	rm -rf ./sample/sample_tcp_client ./sample/sample_tcp_server 
 	rm -rf ./sample/sample_udp_client ./sample/sample_udp_server
